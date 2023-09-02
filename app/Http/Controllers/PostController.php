@@ -11,12 +11,13 @@ class PostController extends Controller
     //
     public function index()
     {  
-       
+     
         return view('posts', [
             "title" => "Blogg" ,
             "active" => 'posts',
-            "posts" => Post::all()
-            // ->filter(request(['search', 'category', 'author']))->paginate(7)->withQueryString()
+            "posts" => Post::with('category')->latest()->search()->get()
+            
+          
         ]);
     }
 

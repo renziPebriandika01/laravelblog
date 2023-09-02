@@ -7,10 +7,10 @@
                 <h1 class="text-3xl font-bold mb-3">{{ $post->title }}</h1>
 
                 <p>By. {{ $post->author }} </p>
-                <p class="text-red-500 uppercase">{{ $post->category->name }}</p>
+                <small class="text-white absolute top-20 right-20 bg-black bg-opacity-50 px-2 py-1 rounded-sm">category : {{ $post->category->name }}</small>
 
-                <img src="https://source.unsplash.com/1200x400?{{ $post->category }}" alt="{{ $post->category }}"
-                    class="w-full h-auto my-3">
+                <img src="{{ asset('storage/' .$post->image) }}" alt="{{ $post->category }}"
+                    class="w-32 h-40 max-h-30 overflow-hidde">
 
                 <article class="my-3 text-lg">
                     {!! $post->body !!}

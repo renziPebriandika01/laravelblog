@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardPostController;
+use App\Http\Controllers\DashboardCategoryController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PostController;
@@ -16,12 +17,7 @@ use App\Http\Controllers\PostController;
 |
 */
 
-Route::get('/', function () {
-    return view('home', [
-        "title" => "Home",
-        "active" => 'home'
-    ]);
-});
+
 
 Route::get('/dashboard', function () {
     return view('dashboard.index', [
@@ -52,12 +48,15 @@ Route::get('/about', function () {
     ]);
 });
 
-Route::get('/posts', [PostController::class, 'index'])->name('posts')->middleware(['auth', 'verified', 'role_or_permission:lihat-tulisan|admin']);
+
+Route::get('/', [PostController::class, 'index'])->name('posts');
 
 
 Route::get('/posts/{post:slug}', [PostController::class, 'show']);
 
+
 Route::resource('/dashboard/posts', DashboardPostController::class)->middleware(['auth', 'verified', 'role_or_permission:lihat-tulisan|admin']);
+Route::resource('/dashboard/addCategory', DashboardCategoryController::class)->middleware(['auth', 'verified', 'role:admin']);
 
 Route::get('http://localhost:8000/dashboard/posts/checkSlug',[DashboardPostController::class,'checkSlug']);
 

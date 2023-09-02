@@ -6,6 +6,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Category;
 use App\Models\Post;
+use App\Models\User;
 use Cviebrock\EloquentSluggable\Services\SlugService;
 
 use Illuminate\Http\Request;
@@ -17,11 +18,13 @@ class DashboardPostController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Post $post)
     {
 
+            $postAdmin = Post::with(['user','category'])->get();
         return view('dashboard.posts', [
-            "posts" => Post::where('user_id', auth()->user()->id)->get(),
+            "posts" => $postAdmin->where('user_id', auth()->user()->id),
+            "postsAdmin" => $postAdmin,
             "title" => "dashboard ",
         ]);
     }
@@ -39,6 +42,7 @@ class DashboardPostController extends Controller
         ]);
     }
 
+
     /**
      * Store a newly created resource in storage.
      *
@@ -47,38 +51,29 @@ class DashboardPostController extends Controller
      */
     public function store(Request $request)
     {
+
+         
         $validatedData = $request->validate([
             'title' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:posts',
-            'category_id' => 'required|exists:categories,id',
+            'author' => 'required',
+            'image'=>'image|file|max:6144',
+            'category_id' => 'required',
             'body' => 'required|string',
         ]);
+
+        if($request->file('image')){
+            $validatedData['image'] = $request->file('image')->store('folder-images');
+        }
 
         $user = Auth::user();
 
 
-        $user_id = $user->id;
-        $author = $user->name;
+        $validatedData['user_id'] = $user->id;
+        $validatedData['excerpt'] = Str::limit(strip_tags($request->body), 200);
+        Post::create($validatedData);
 
-
-        $excerpt = Str::limit(strip_tags($validatedData['body']), 200);
-
-
-        $post = new Post([
-            'title' => $validatedData['title'],
-            'slug' => $validatedData['slug'],
-            'category_id' => $validatedData['category_id'],
-            'body' => $validatedData['body'],
-            'user_id' => $user_id,
-            'excerpt' => $excerpt,
-            'author' => $author,
-        ]);
-        $post->save();
-
-
-        session()->flash('success', 'Pesan berhasil dikirim dan disimpan!');
-
-        return redirect()->back();
+        return redirect('/dashboard/posts')->with('success','post telah di tambahkan');
     }
 
     /**
@@ -90,7 +85,7 @@ class DashboardPostController extends Controller
     public function show(Post $post)
     {
         return view('dashboard.crud.show', [
-            "title" => "halaman dashboard",
+            "title" => "show",
             "post" => $post
         ]);
     }
@@ -103,7 +98,12 @@ class DashboardPostController extends Controller
      */
     public function edit(Post $post)
     {
-        //
+        return view('dashboard.crud.edit', [
+            'title' => 'edit',
+            'categories' => Category::all(),
+            "post" => $post
+            
+        ]);
     }
 
     /**
@@ -115,7 +115,25 @@ class DashboardPostController extends Controller
      */
     public function update(Request $request, Post $post)
     {
-        //
+        $rules = [
+            'title' => 'required|string|max:255',
+            'author' => 'required',
+            'category_id' => 'required',
+            'body' => 'required|string',
+        ];
+
+        if($request->slug != $post->slug){
+            $rules['slug']= 'required|unique:posts';
+        }
+        $validatedData = $request->validate($rules);
+        $user = Auth::user();
+
+
+        $validatedData['user_id'] = $user->id;
+        $validatedData['excerpt'] = Str::limit(strip_tags($request->body), 200);
+        Post::where('id',$post->id)->update($validatedData);
+
+        return redirect('/dashboard/posts')->with('success','post telah di perbaharui');
     }
 
     /**
